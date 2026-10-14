@@ -6,19 +6,24 @@
 #!tag=去广告,马上充,商捷,充电
 
 ############################################################
-# HAR 抓包确认广告平台:易电联(yidianlingyi.cn)
-#   api.yidianlingyi.cn//adpp/api/universalAdQuery → 拉广告数据
+# HAR 抓包确认:
+# 广告平台 = 易电联(yidianlingyi.cn)
+#   api.yidianlingyi.cn//adpp/api/universalAdQuery → 拉广告数据(JSON)
 #   api.yidianlingyi.cn//adpp/api/ad/exposure → 广告曝光上报
-#   image.yidianlingyi.cn/adpp/images/bannermage/ → 广告图片
+#   image.yidianlingyi.cn/adpp/images/bannermage/ → 广告图片资源
 #
-# 拦截方式:DNS 层直接拒绝,不需要 MitM
-# 效果:广告消失(开屏可能有空白倒计时,因为小程序前端
-#       代码是"有广告就显示图片+倒计时,没广告也倒计时")
+# 拦截策略:
+#   1. api.yidianlingyi.cn → REJECT-DICT,请求被拒绝,返回空JSON
+#      这样小程序拿不到广告数据,就不会去加载图片
+#   2. image.yidianlingyi.cn → REJECT-IMG,保险兜底
+#   3. 腾讯统一域名(防切换广告组件)
+#
+# 不需要 MitM,DNS 层面直接拦截
 ############################################################
 
 [Rule]
 
-# ═══ 腾讯统一广告域名(防它切换官方广告组件) ═══
+# ═══ 第一层:腾讯统一广告域名(防它后续切换) ═══
 DOMAIN, wxa.wxs.qq.com, REJECT-DICT
 DOMAIN, wximg.wxs.qq.com, REJECT-DICT
 DOMAIN, wxsmw.wxs.qq.com, REJECT-DICT
@@ -26,9 +31,10 @@ DOMAIN, wxsnsdy.wxs.qq.com, REJECT
 DOMAIN, wxsnsdythumb.wxs.qq.com, REJECT
 DOMAIN, wxsmsdy.video.qq.com, REJECT
 
-# ═══ 马上充广告主域名(核心!) ═══
-# 广告数据查询 + 曝光上报,拦了就没广告数据返回
+# ═══ 第二层:马上充广告主域名(DNS层拦截,核心) ═══
+# 广告数据查询 + 曝光上报,拦了就没广告数据
 DOMAIN, api.yidianlingyi.cn, REJECT-DICT
 
-# ═══ 广告图片资源域名(兜底) ═══
+# ═══ 第三层:保险兜底(广告图片资源) ═══
 DOMAIN, image.yidianlingyi.cn, REJECT-IMG
+URL-REGEX, "^https?://[^/]*yidianlingyi\.cn/adpp/", REJECT-DICT
