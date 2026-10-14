@@ -1,0 +1,34 @@
+#!name=马上充小程序去广告
+#!desc=针对佛山商捷"马上充"充电小程序的广告拦截
+#!author=LocalDev
+#!loon_version=3.5.1(983)
+#!date=2026-10-14
+#!tag=去广告,马上充,商捷,充电
+
+############################################################
+# HAR 抓包确认广告平台:易电联(yidianlingyi.cn)
+#   api.yidianlingyi.cn//adpp/api/universalAdQuery → 拉广告数据
+#   api.yidianlingyi.cn//adpp/api/ad/exposure → 广告曝光上报
+#   image.yidianlingyi.cn/adpp/images/bannermage/ → 广告图片
+#
+# 拦截方式:DNS 层直接拒绝,不需要 MitM
+# 效果:广告消失(开屏可能有空白倒计时,因为小程序前端
+#       代码是"有广告就显示图片+倒计时,没广告也倒计时")
+############################################################
+
+[Rule]
+
+# ═══ 腾讯统一广告域名(防它切换官方广告组件) ═══
+DOMAIN, wxa.wxs.qq.com, REJECT-DICT
+DOMAIN, wximg.wxs.qq.com, REJECT-DICT
+DOMAIN, wxsmw.wxs.qq.com, REJECT-DICT
+DOMAIN, wxsnsdy.wxs.qq.com, REJECT
+DOMAIN, wxsnsdythumb.wxs.qq.com, REJECT
+DOMAIN, wxsmsdy.video.qq.com, REJECT
+
+# ═══ 马上充广告主域名(核心!) ═══
+# 广告数据查询 + 曝光上报,拦了就没广告数据返回
+DOMAIN, api.yidianlingyi.cn, REJECT-DICT
+
+# ═══ 广告图片资源域名(兜底) ═══
+DOMAIN, image.yidianlingyi.cn, REJECT-IMG
