@@ -1,0 +1,40 @@
+#!name=炫图AI画图解锁会员
+#!desc=自动注册+解锁AI功能+无水印
+#!author=ios151
+#!loon_version=3.5.1(983)
+#!date=2025-09-30
+#!tag=炫图,xuantu,AI,画图
+
+############################################################
+# 原理:
+#   xt.js  → 匹配 /creation/myworks,自动注册临时邮箱+验证码登录拿 token
+#   xt2.js → 匹配会员/生成相关 API,把 token 注入请求头
+#   xt3.js → 匹配 /user/getUserInfo,伪造已登录的 userInfo 响应
+#
+# 功能:
+#   ✅ AI 画图无次数限制
+#   ✅ 解锁会员功能
+#   ✅ 无水印导出
+#
+# 使用:
+#   1. 安装并信任 Loon MitM 根证书
+#   2. 开启 MitM(plugin 会自动配置 hostname)
+#   3. 打开炫图 App → 微信登录 → 进入个人页面
+#   4. Loon 日志出现 "✅ 登录成功" 即成功
+############################################################
+
+[Rewrite]
+# 触发自动注册拿 token(每次进"我的作品"都执行)
+^https:\/\/xuantu\.pro\/creation\/myworks url script-request-header https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt.js
+
+# 注入 token 解锁会员功能
+^https:\/\/xuantu\.pro\/(creation\/(generate\/(v2|v3)|memberships|getProgress|imageintent)|file\/aliyun\/sts|community\/comment\/pub)\/? url script-request-header https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt2.js
+
+# 伪造已登录状态(个人中心显示会员)
+^https:\/\/xuantu\.pro\/user\/getUserInfo url script-response-body https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt3.js
+
+# 无水印:去掉 ReplaceBackgroundWithPrompt 路径里的尺寸参数
+^http://statica\.xuantu\.pro/x/prod/ReplaceBackgroundWithPrompt/(\d+-\d+)\.jpg\?.* url 302 http://statica.xuantu.pro/x/prod/ReplaceBackgroundWithPrompt/$1.jpg
+
+[Mitm]
+hostname = xuantu.pro, statica.xuantu.pro
