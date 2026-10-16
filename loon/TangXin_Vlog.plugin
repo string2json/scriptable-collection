@@ -1,0 +1,32 @@
+#!name=糖心Vlog
+#!desc=糖心Vlog解锁点播去除广告. 最后更新: 2026-10-05 (维护: string2json)
+#!icon=https://raw.githubusercontent.com/string2json/scriptable-collection/main/img/tangxin.png
+#!date=2026-10-16
+#!tag=18+
+
+############################################################
+# 使用方式:
+#   1. 安装并信任 Loon MitM 根证书
+#   2. 开启 MitM(plugin 自动配置 hostname)
+#   3. 打开糖心 Vlog App → 正常使用
+#
+# 架构说明 ⚠️ 重要:
+#   此 plugin 采用"请求转发"架构 —— 它把糖心 App 的 API 请求
+#   转发到作者服务器 txscript.pages.dev/tx/,由服务器返回破解后的响应。
+#   本仓库只维护 plugin 配置和转发脚本副本。
+#   破解核心在作者服务器,如果那边挂了本 plugin 也会失效。
+#
+#   转发脚本: rewrite/tx/loon.js
+#   上游: https://txscript.pages.dev/tx/tx.lpx
+#
+# 2026-10-16 维护:
+#   plugin + loon.js + icon 全量迁移到本仓库
+#   script-path 改指向本仓库 raw URL(避免作者删库)
+#   转发目标保持作者服务器(破解核心不在本仓库)
+############################################################
+
+[Script]
+http-request ^https?:\/\/((?:[a-z]+\.)?tx\w+\.com)\/(txapi\/(?:user\/info|system\/info|movie\/(?:detail|navBlock|navFilter|blockDetail|similarSearch))) script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/tx/loon.js, tag=糖心解锁, requires-body=true, binary-body-mode=true
+
+[Mitm]
+hostname = *.txxkl7s60j.com, *.tx6cyknm46.com, *.txui3fvxr2.com, *.tx3it6zzx8.com, *.txwnxvha73.com, *.txfdnb0xib.com, *.txqv37xp3c.com, *.txgwp6d7vl.com, *.txsvlcr8yl.com, *.txl83dbwq1.com, txxkl7s60j.com, tx6cyknm46.com, txui3fvxr2.com, tx3it6zzx8.com, txwnxvha73.com, txfdnb0xib.com, txqv37xp3c.com, txgwp6d7vl.com, txsvlcr8yl.com, txl83dbwq1.com

@@ -8,6 +8,16 @@ Loon 代理客户端的 `.plugin` 插件文件。
 
 所有 plugin 均使用 Loon 正确语法:`[Script] http-request / http-response` + `[Rewrite]` + `[Mitm]`,非 Surge 的 `script-request-header` 旧语法。
 
+### TangXin_Vlog.plugin
+
+**糖心 Vlog 解锁点播去广告** —— 采用请求转发架构。
+
+- **触发规则**:拦截糖心 App 的 API 请求 → 转发到作者服务器
+- **MitM**:需要,plugin 已自动配置 10 个混淆域名
+- **脚本路径**:`rewrite/tx/loon.js`(本仓库维护副本,但转发目标仍是作者服务器)
+- **上游**:https://txscript.pages.dev/tx/tx.lpx
+- **⚠️ 架构说明**:此 plugin 的破解逻辑在作者服务器 `txscript.pages.dev` 上,本仓库只维护本地配置和转发脚本。如果作者服务器不可用,plugin 也会失效。
+
 ### WeChatMiniPrograms_AdBlock.plugin
 
 **马上充小程序去广告** —— 针对佛山商捷"马上充"充电小程序的广告拦截。
@@ -109,6 +119,7 @@ Loon plugin 图标资源目录。所有 plugin 的 `#!icon=` 都指向本目录�
 
 | 文件 | 对应 plugin | 来源 |
 |---|---|---|
+| `tangxin.png` | TangXin_Vlog | txscript.pages.dev/tx/icon.png |
 | `mascc.png` | WeChatMiniPrograms_AdBlock | [icons8 lightning-bolt](https://img.icons8.com/color/256/lightning-bolt.png) |
 | `calculatorhd.png` | CalculatorHDPro_Unlock | [icons8 calculator](https://img.icons8.com/color/256/calculator.png) |
 | `xuantu.png` | XuanTu_AI_Unlock | AI 生成 |
@@ -124,6 +135,8 @@ Loon plugin 图标资源目录。所有 plugin 的 `#!icon=` 都指向本目录�
 
 | 日期 | 变更 |
 |---|---|
+| 2026-10-16 | 新增糖心 Vlog plugin(`TangXin_Vlog.plugin`),采用请求转发架构,plugin+loon.js+icon 全量迁移到本仓库 |
+| 2026-10-16 | 替换 5 个图标为真实来源:3 个来自 95du/scripts,2 个来自 icons8 |
 | 2026-10-16 | 全部 plugin 新增 `#!icon=`,建立 `img/` 目录统一维护图标,避免上游删库导致图标丢失 |
 | 2026-10-16 | 12123 plugin 修复:script-path 从已删除的 `getToken_12123.js` 改为 `getBody_12123.js`;MitM 从 `sni-hosts` 改为 `hostname`;保存最新 rewrite 脚本 |
 | 2026-10-16 | 全部 plugin 从 `[Rewrite] script-request-header`(Surge 语法)迁移为 `[Script] http-request`(Loon 正确语法) |
