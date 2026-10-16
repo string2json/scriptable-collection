@@ -25,15 +25,31 @@ Loon 代理客户端的 `.plugin` 插件文件。
 - **MitM**:需要,plugin 已自动配置 hostname
 - **脚本来源**:github.com/ios151/Rewrite
 
+### ChinaUnicom_Cookie.plugin
+
+**中国联通 Cookie 自动获取** —— 打开联通 App 首页流量查询时自动捕获 Cookie(JSESSIONID)。
+
+- **触发规则**:匹配 `smartwisdomCommon` / `smartwisdomCommonNew` 请求
+- **MitM**:需要,plugin 已自动配置 hostname
+- **脚本路径**:`rewrite/10010/index.js`(本仓库维护)
+- **上游**:https://github.com/dompling/Script/tree/master/10010
+
 ### 12123_token.plugin + 12123.js
 
 12123 App 相关的 Token 获取/解析脚本。
 
 ## rewrite/
 
-Surge / Loon 通用的 rewrite JS 脚本。
+Surge / Loon / QX 三端通用的 rewrite JS 脚本。
 
 - `xt.js` —— 炫图自动注册核心脚本(Env 框架封装)
+- `10010/index.js` —— 中国联通 Cookie 自动获取(dompling API 框架封装)
+
+## script/
+
+Scriptable(iOS)小组件脚本。
+
+- `TodayOilPrice.scriptable` —— 今日油价小组件(继承 DmYY 框架,支持小/中/大尺寸)
 
 ## 使用
 
