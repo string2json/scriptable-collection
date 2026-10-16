@@ -5,6 +5,338 @@
     "glyph": "bolt"
   },
   "name": "南网在线_Pro",
-  "script": "// Variables used by Scriptable.\n// These must be at the very top of the file. Do not edit.\n// icon-color: deep-green; icon-glyph: bolt;\n/**\n * 南网在线 Pro - 极简版\n * 独立 Scriptable 组件,不依赖 95du 远程下载模块\n * \n * 依赖数据:SouthernPower_95598.plugin 获取的 x-auth-token\n *   - Loon plugin: https://github.com/string2json/scriptable-collection/tree/main/loon\n *   - Token 持久化键名:token_95598\n *   - 若未配置 BoxJs,可在 Scriptable 运行时手动粘贴 token\n */\n\n// ============ 基础配置 ============\nconst CACHE_KEY = 'nwg_token';\nconst fm = FileManager.local();\nconst cacheDir = fm.joinPath(fm.documentsDirectory(), 'nwg_cache');\nif (!fm.fileExists(cacheDir)) fm.createDirectory(cacheDir);\n\n// ============ 读取 Token ============\nlet token = args.widgetParameter || fm.string(fm.joinPath(cacheDir, 'token.txt'));\n\n// 如果没 token,尝试 BoxJs 中转\nif (!token) {\n  try {\n    const box = await new Request('http://boxjs.com/query/data/token_95598').loadJSON();\n    if (box && box.val) token = box.val;\n  } catch (e) {}\n}\n\n// 还是没 token → 运行时弹窗让用户填\nif (!token) {\n  const alert = new Alert();\n  alert.title = '南网在线 Pro';\n  alert.message = '未检测到 token。请先在 Loon 中运行 SouthernPower_95598.plugin 获取 token,或手动粘贴:';\n  alert.addTextField('x-auth-token', '');\n  alert.addAction('保存并运行');\n  alert.addCancelAction('取消');\n  const idx = await alert.presentAlert();\n  if (idx === -1) Script.exit();\n  token = alert.textFieldValue(0).trim();\n  if (token) fm.writeString(fm.joinPath(cacheDir, 'token.txt'), token);\n  else Script.exit();\n}\n\n// ============ API 封装 ============\nconst NWG_API = 'https://95598.csg.cn/ucs/ma/zt';\n\nasync function nwgRequest(path, body) {\n  try {\n    const req = new Request(`${NWG_API}${path}`);\n    req.method = 'POST';\n    req.headers = {\n      'Content-Type': 'application/json',\n      'x-auth-token': token,\n    };\n    req.body = JSON.stringify(body || {});\n    const json = await req.loadJSON();\n    if (json.sta === '00' || json.sta === 0) return json.data;\n    return null;\n  } catch (e) {\n    console.log(`API 请求失败: ${path}`, e);\n    return null;\n  }\n}\n\n// ============ 数据获取 ============\nasync function fetchData() {\n  const start = Date.now();\n  \n  // 1. 查绑定户号\n  const eleUsers = await nwgRequest('/eleCustNumber/queryBindEleUsers', {});\n  if (!eleUsers || eleUsers.length === 0) return null;\n  const user = eleUsers[0];\n  const { eleCustId, areaCode } = user;\n  \n  // 2. 并行获取:余额 + 账单概览 + 年度账单\n  const [balanceData, billData, yearBillData] = await Promise.all([\n    nwgRequest('/charge/queryUserAccountNumberSurplus', { eleCustId, areaCode }),\n    nwgRequest('/charge/queryBillOverview', { eleCustId, areaCode }),\n    nwgRequest('/charge/selectElecBill', { \n      electricityBillYear: new Date().getFullYear(), \n      areaCode, \n      eleCustId \n    }),\n  ]);\n  \n  const balance = balanceData && balanceData[0] ? parseFloat(balanceData[0].balance || 0) : 0;\n  \n  // 月度账单(最近 12 个月)\n  const bills = (billData && billData.billOverviewModelList) || [];\n  const lastBill = bills.find(b => b.electricityBillYearMonth && b.readingDate);\n  const prevBill = bills[1] || lastBill;\n  \n  // 年度汇总\n  const yearBills = (yearBillData && yearBillData.lsEleBill) || [];\n  const yearTotal = yearBills.reduce((sum, b) => sum + parseFloat(b.totalElectricity || 0), 0);\n  const yearAmount = yearBills.reduce((sum, b) => sum + parseFloat(b.totalAmount || 0), 0);\n  \n  // 上期数据\n  const lastPower = lastBill ? parseFloat(lastBill.totalElectricity || 0) : 0;\n  const lastAmount = lastBill ? parseFloat(lastBill.totalAmount || 0) : 0;\n  const prevPower = prevBill ? parseFloat(prevBill.totalElectricity || 0) : 0;\n  const prevAmount = prevBill ? parseFloat(prevBill.totalAmount || 0) : 0;\n  \n  // 月度柱状图数据(12 个月)\n  const monthData = Array(12).fill(0);\n  bills.forEach(b => {\n    if (b.electricityBillYearMonth) {\n      const m = parseInt(b.electricityBillYearMonth.substring(4, 6), 10);\n      if (m >= 1 && m <= 12) monthData[m - 1] = parseFloat(b.totalElectricity || 0);\n    }\n  });\n  \n  console.log(`数据获取耗时:${Date.now() - start}ms`);\n  console.log(`余额:${balance},上期电量:${lastPower},年度:${yearTotal}度/${yearAmount}元`);\n  \n  return {\n    balance,\n    prevBalance: 0, // 可以存上次的余额做对比\n    lastPower,\n    lastAmount,\n    prevPower,\n    prevAmount,\n    yearTotal,\n    yearAmount,\n    monthData,\n    eleCustId,\n    areaCode,\n    custName: user.custName || '用户',\n  };\n}\n\n// ============ 梯度电价计算 ============\nfunction getTierInfo(power) {\n  const now = new Date();\n  const month = now.getMonth() + 1;\n  const isSummer = month >= 4 && month <= 10;\n  \n  // 简化版梯度,实际按广东标准\n  const tiers = isSummer\n    ? [{ limit: 220, name: '第一档' }, { limit: 400, name: '第二档' }, { limit: Infinity, name: '第三档' }]\n    : [{ limit: 170, name: '第一档' }, { limit: 280, name: '第二档' }, { limit: Infinity, name: '第三档' }];\n  \n  let used = 0;\n  for (let i = 0; i < tiers.length; i++) {\n    if (power <= tiers[i].limit) {\n      const prevLimit = i === 0 ? 0 : tiers[i - 1].limit;\n      const tierPower = power - prevLimit;\n      const pct = ((power - prevLimit) / (tiers[i].limit - prevLimit) * 100).toFixed(1);\n      return { \n        tier: tiers[i].name, \n        pct: Math.min(100, pct),\n        used,\n        limit: tiers[i].limit \n      };\n    }\n    used = tiers[i].limit;\n  }\n  return { tier: '第三档', pct: 100, used: 400, limit: Infinity };\n}\n\n// ============ 渲染 ============\nasync function render() {\n  const family = config.widgetFamily;\n  const data = await fetchData();\n  \n  if (family === 'accessoryRectangular') {\n    // 小组件:极简余额 + 迷你柱图\n    const w = new ListWidget();\n    w.setPadding(12, 14, 12, 14);\n    \n    if (!data) {\n      w.addText('⚠️ 数据获取失败').font = Font.regularSystemFont(13);\n      return w;\n    }\n    \n    // 柱状图 canvas\n    const chart = drawMiniBarChart(data.monthData.slice(-6), family);\n    \n    const topRow = w.addStack();\n    topRow.layoutHorizontally();\n    topRow.spacing = 6;\n    topRow.addImage(chart).imageSize = new Size(50, 28);\n    \n    const textCol = topRow.addStack();\n    textCol.layoutVertically();\n    textCol.addText(`上期:${data.prevBalance.toFixed(2)}`).font = Font.regularSystemFont(9);\n    textCol.textColor = Color.gray();\n    \n    w.addSpacer(2);\n    const bal = w.addText(`¥ ${data.balance.toFixed(2)}`);\n    bal.font = Font.boldSystemFont(20);\n    bal.minimumScaleFactor = 0.6;\n    \n    return w;\n  }\n  \n  // Medium 组件\n  const w = new ListWidget();\n  w.setPadding(14, 16, 14, 16);\n  \n  if (!data) {\n    const err = w.addText('⚠️ 数据获取失败,检查 token 是否有效');\n    err.font = Font.regularSystemFont(13);\n    return w;\n  }\n  \n  // --- 顶部:余额 ---\n  const topRow = w.addStack();\n  topRow.layoutHorizontally();\n  \n  const balCol = topRow.addStack();\n  balCol.layoutVertically();\n  balCol.addText('剩余电费').font = Font.regularSystemFont(11);\n  balCol.textColor = Color.gray();\n  const balText = balCol.addText(`¥${data.balance.toFixed(2)}`);\n  balText.font = Font.boldSystemFont(26);\n  \n  topRow.addSpacer();\n  \n  // 右侧 2x2 数据卡片\n  const gridCol = topRow.addStack();\n  gridCol.layoutVertically();\n  gridCol.spacing = 4;\n  \n  const makeCard = (label, value) => {\n    const s = gridCol.addStack();\n    s.layoutHorizontally();\n    s.spacing = 12;\n    s.addText(label).font = Font.regularSystemFont(9);\n    s.addText(value).font = Font.semiboldSystemFont(13);\n  };\n  \n  makeCard('上期电费', `¥${data.prevAmount.toFixed(2)}`);\n  makeCard('上期电量', `${data.prevPower.toFixed(1)}°`);\n  makeCard('年度电费', `¥${data.yearAmount.toFixed(2)}`);\n  makeCard('年度电量', `${data.yearTotal.toFixed(1)}°`);\n  \n  w.addSpacer(10);\n  \n  // --- 底部:柱状图 + 梯度进度 ---\n  const bottomRow = w.addStack();\n  bottomRow.layoutHorizontally();\n  bottomRow.spacing = 10;\n  \n  // 左:柱状图\n  const chart = drawBarChart(data.monthData, family);\n  const chartStack = bottomRow.addStack();\n  chartStack.layoutVertically();\n  chartStack.addImage(chart);\n  chartStack.addSpacer(2);\n  chartStack.addText('近12个月').font = Font.regularSystemFont(8);\n  chartStack.textColor = Color.gray();\n  \n  // 右:梯度进度条\n  const tier = getTierInfo(data.lastPower);\n  const progStack = bottomRow.addStack();\n  progStack.layoutVertically();\n  \n  progStack.addText(`${tier.tier}  ${tier.pct}%`).font = Font.regularSystemFont(10);\n  \n  // 进度条\n  const barBg = progStack.addStack();\n  barBg.size = new Size(120, 8);\n  barBg.backgroundColor = new Color('#E0E0E0');\n  barBg.cornerRadius = 4;\n  \n  const barFill = barBg.addStack();\n  barFill.size = new Size(parseFloat(tier.pct) * 1.2, 8);\n  barFill.backgroundColor = tier.tier === '第一档' ? new Color('#22C55E') \n    : tier.tier === '第二档' ? new Color('#F59E0B') \n    : new Color('#EF4444');\n  barFill.cornerRadius = 4;\n  \n  return w;\n}\n\n// ============ 绘制柱状图 ============\nfunction drawBarChart(data, family) {\n  const width = family === 'accessoryRectangular' ? 52 : 180;\n  const height = family === 'accessoryRectangular' ? 28 : 60;\n  \n  const ctx = new DrawContext();\n  ctx.size = new Size(width, height);\n  ctx.opaque = false;\n  \n  const max = Math.max(...data, 1);\n  const count = data.length;\n  const barGap = family === 'accessoryRectangular' ? 1 : 3;\n  const barWidth = (width - barGap * (count - 1)) / count;\n  \n  // 渐变色柱\n  const colors = [\n    new Color('#3B82F6'), // 蓝\n    new Color('#10B981'), // 绿\n    new Color('#F59E0B'), // 黄\n    new Color('#EF4444'), // 红\n    new Color('#8B5CF6'), // 紫\n    new Color('#EC4899'), // 粉\n  ];\n  \n  data.forEach((v, i) => {\n    const barH = Math.max(2, (v / max) * (height - 2));\n    const x = i * (barWidth + barGap);\n    const y = height - barH;\n    const c = colors[i % colors.length];\n    \n    ctx.setFillColor(c);\n    ctx.fillRect(new Rect(x, y, barWidth, barH));\n  });\n  \n  return ctx.getImage();\n}\n\n// ============ 主入口 ============\ntry {\n  const widget = await render();\n  if (config.runsInWidget) {\n    Script.setWidget(widget);\n  } else {\n    // App 内预览\n    widget.presentMedium();\n  }\n} catch (e) {\n  console.log('渲染失败:', e);\n  const w = new ListWidget();\n  w.addText('❌ 渲染失败: ' + e.message).font = Font.regularSystemFont(13);\n  if (config.runsInWidget) Script.setWidget(w);\n  else w.presentMedium();\n}\nScript.complete();\n",
+  "script": "// Variables used by Scriptable.
+// These must be at the very top of the file. Do not edit.
+// icon-color: deep-green; icon-glyph: bolt;
+/**
+ * 南网在线 Pro - 极简版
+ * 独立 Scriptable 组件,不依赖 95du 远程下载模块
+ * 
+ * 依赖数据:SouthernPower_95598.plugin 获取的 x-auth-token
+ *   - Loon plugin: https://github.com/string2json/scriptable-collection/tree/main/loon
+ *   - Token 持久化键名:token_95598
+ *   - 若未配置 BoxJs,可在 Scriptable 运行时手动粘贴 token
+ */
+
+// ============ 基础配置 ============
+const CACHE_KEY = 'nwg_token';
+const fm = FileManager.local();
+const cacheDir = fm.joinPath(fm.documentsDirectory(), 'nwg_cache');
+if (!fm.fileExists(cacheDir)) fm.createDirectory(cacheDir);
+
+// ============ 读取 Token ============
+let token = args.widgetParameter || fm.readString(fm.joinPath(cacheDir, 'token.txt'));
+
+// 如果没 token,尝试 BoxJs 中转
+if (!token) {
+  try {
+    const box = await new Request('http://boxjs.com/query/data/token_95598').loadJSON();
+    if (box && box.val) token = box.val;
+  } catch (e) {}
+}
+
+// 还是没 token → 运行时弹窗让用户填
+if (!token) {
+  const alert = new Alert();
+  alert.title = '南网在线 Pro';
+  alert.message = '未检测到 token。请先在 Loon 中运行 SouthernPower_95598.plugin 获取 token,或手动粘贴:';
+  alert.addTextField('x-auth-token', '');
+  alert.addAction('保存并运行');
+  alert.addCancelAction('取消');
+  const idx = await alert.presentAlert();
+  if (idx === -1) Script.exit();
+  token = alert.textFieldValue(0).trim();
+  if (token) fm.writeString(fm.joinPath(cacheDir, 'token.txt'), token);
+  else Script.exit();
+}
+
+// ============ API 封装 ============
+const NWG_API = 'https://95598.csg.cn/ucs/ma/zt';
+
+async function nwgRequest(path, body) {
+  try {
+    const req = new Request(`${NWG_API}${path}`);
+    req.method = 'POST';
+    req.headers = {
+      'Content-Type': 'application/json',
+      'x-auth-token': token,
+    };
+    req.body = JSON.stringify(body || {});
+    const json = await req.loadJSON();
+    if (json.sta === '00' || json.sta === 0) return json.data;
+    return null;
+  } catch (e) {
+    console.log(`API 请求失败: ${path}`, e);
+    return null;
+  }
+}
+
+// ============ 数据获取 ============
+async function fetchData() {
+  const start = Date.now();
+  
+  // 1. 查绑定户号
+  const eleUsers = await nwgRequest('/eleCustNumber/queryBindEleUsers', {});
+  if (!eleUsers || eleUsers.length === 0) return null;
+  const user = eleUsers[0];
+  const { eleCustId, areaCode } = user;
+  
+  // 2. 并行获取:余额 + 账单概览 + 年度账单
+  const [balanceData, billData, yearBillData] = await Promise.all([
+    nwgRequest('/charge/queryUserAccountNumberSurplus', { eleCustId, areaCode }),
+    nwgRequest('/charge/queryBillOverview', { eleCustId, areaCode }),
+    nwgRequest('/charge/selectElecBill', { 
+      electricityBillYear: new Date().getFullYear(), 
+      areaCode, 
+      eleCustId 
+    }),
+  ]);
+  
+  const balance = balanceData && balanceData[0] ? parseFloat(balanceData[0].balance || 0) : 0;
+  
+  // 月度账单(最近 12 个月)
+  const bills = (billData && billData.billOverviewModelList) || [];
+  const lastBill = bills.find(b => b.electricityBillYearMonth && b.readingDate);
+  const prevBill = bills[1] || lastBill;
+  
+  // 年度汇总
+  const yearBills = (yearBillData && yearBillData.lsEleBill) || [];
+  const yearTotal = yearBills.reduce((sum, b) => sum + parseFloat(b.totalElectricity || 0), 0);
+  const yearAmount = yearBills.reduce((sum, b) => sum + parseFloat(b.totalAmount || 0), 0);
+  
+  // 上期数据
+  const lastPower = lastBill ? parseFloat(lastBill.totalElectricity || 0) : 0;
+  const lastAmount = lastBill ? parseFloat(lastBill.totalAmount || 0) : 0;
+  const prevPower = prevBill ? parseFloat(prevBill.totalElectricity || 0) : 0;
+  const prevAmount = prevBill ? parseFloat(prevBill.totalAmount || 0) : 0;
+  
+  // 月度柱状图数据(12 个月)
+  const monthData = Array(12).fill(0);
+  bills.forEach(b => {
+    if (b.electricityBillYearMonth) {
+      const m = parseInt(b.electricityBillYearMonth.substring(4, 6), 10);
+      if (m >= 1 && m <= 12) monthData[m - 1] = parseFloat(b.totalElectricity || 0);
+    }
+  });
+  
+  console.log(`数据获取耗时:${Date.now() - start}ms`);
+  console.log(`余额:${balance},上期电量:${lastPower},年度:${yearTotal}度/${yearAmount}元`);
+  
+  return {
+    balance,
+    prevBalance: 0, // 可以存上次的余额做对比
+    lastPower,
+    lastAmount,
+    prevPower,
+    prevAmount,
+    yearTotal,
+    yearAmount,
+    monthData,
+    eleCustId,
+    areaCode,
+    custName: user.custName || '用户',
+  };
+}
+
+// ============ 梯度电价计算 ============
+function getTierInfo(power) {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const isSummer = month >= 4 && month <= 10;
+  
+  // 简化版梯度,实际按广东标准
+  const tiers = isSummer
+    ? [{ limit: 220, name: '第一档' }, { limit: 400, name: '第二档' }, { limit: Infinity, name: '第三档' }]
+    : [{ limit: 170, name: '第一档' }, { limit: 280, name: '第二档' }, { limit: Infinity, name: '第三档' }];
+  
+  let used = 0;
+  for (let i = 0; i < tiers.length; i++) {
+    if (power <= tiers[i].limit) {
+      const prevLimit = i === 0 ? 0 : tiers[i - 1].limit;
+      const tierPower = power - prevLimit;
+      const pct = ((power - prevLimit) / (tiers[i].limit - prevLimit) * 100).toFixed(1);
+      return { 
+        tier: tiers[i].name, 
+        pct: Math.min(100, pct),
+        used,
+        limit: tiers[i].limit 
+      };
+    }
+    used = tiers[i].limit;
+  }
+  return { tier: '第三档', pct: 100, used: 400, limit: Infinity };
+}
+
+// ============ 渲染 ============
+async function render() {
+  const family = config.widgetFamily;
+  const data = await fetchData();
+  
+  if (family === 'accessoryRectangular') {
+    // 小组件:极简余额 + 迷你柱图
+    const w = new ListWidget();
+    w.setPadding(12, 14, 12, 14);
+    
+    if (!data) {
+      w.addText('⚠️ 数据获取失败').font = Font.regularSystemFont(13);
+      return w;
+    }
+    
+    // 柱状图 canvas
+    const chart = drawMiniBarChart(data.monthData.slice(-6), family);
+    
+    const topRow = w.addStack();
+    topRow.layoutHorizontally();
+    topRow.spacing = 6;
+    topRow.addImage(chart).imageSize = new Size(50, 28);
+    
+    const textCol = topRow.addStack();
+    textCol.layoutVertically();
+    textCol.addText(`上期:${data.prevBalance.toFixed(2)}`).font = Font.regularSystemFont(9);
+    textCol.textColor = Color.gray();
+    
+    w.addSpacer(2);
+    const bal = w.addText(`¥ ${data.balance.toFixed(2)}`);
+    bal.font = Font.boldSystemFont(20);
+    bal.minimumScaleFactor = 0.6;
+    
+    return w;
+  }
+  
+  // Medium 组件
+  const w = new ListWidget();
+  w.setPadding(14, 16, 14, 16);
+  
+  if (!data) {
+    const err = w.addText('⚠️ 数据获取失败,检查 token 是否有效');
+    err.font = Font.regularSystemFont(13);
+    return w;
+  }
+  
+  // --- 顶部:余额 ---
+  const topRow = w.addStack();
+  topRow.layoutHorizontally();
+  
+  const balCol = topRow.addStack();
+  balCol.layoutVertically();
+  balCol.addText('剩余电费').font = Font.regularSystemFont(11);
+  balCol.textColor = Color.gray();
+  const balText = balCol.addText(`¥${data.balance.toFixed(2)}`);
+  balText.font = Font.boldSystemFont(26);
+  
+  topRow.addSpacer();
+  
+  // 右侧 2x2 数据卡片
+  const gridCol = topRow.addStack();
+  gridCol.layoutVertically();
+  gridCol.spacing = 4;
+  
+  const makeCard = (label, value) => {
+    const s = gridCol.addStack();
+    s.layoutHorizontally();
+    s.spacing = 12;
+    s.addText(label).font = Font.regularSystemFont(9);
+    s.addText(value).font = Font.semiboldSystemFont(13);
+  };
+  
+  makeCard('上期电费', `¥${data.prevAmount.toFixed(2)}`);
+  makeCard('上期电量', `${data.prevPower.toFixed(1)}°`);
+  makeCard('年度电费', `¥${data.yearAmount.toFixed(2)}`);
+  makeCard('年度电量', `${data.yearTotal.toFixed(1)}°`);
+  
+  w.addSpacer(10);
+  
+  // --- 底部:柱状图 + 梯度进度 ---
+  const bottomRow = w.addStack();
+  bottomRow.layoutHorizontally();
+  bottomRow.spacing = 10;
+  
+  // 左:柱状图
+  const chart = drawBarChart(data.monthData, family);
+  const chartStack = bottomRow.addStack();
+  chartStack.layoutVertically();
+  chartStack.addImage(chart);
+  chartStack.addSpacer(2);
+  chartStack.addText('近12个月').font = Font.regularSystemFont(8);
+  chartStack.textColor = Color.gray();
+  
+  // 右:梯度进度条
+  const tier = getTierInfo(data.lastPower);
+  const progStack = bottomRow.addStack();
+  progStack.layoutVertically();
+  
+  progStack.addText(`${tier.tier}  ${tier.pct}%`).font = Font.regularSystemFont(10);
+  
+  // 进度条
+  const barBg = progStack.addStack();
+  barBg.size = new Size(120, 8);
+  barBg.backgroundColor = new Color('#E0E0E0');
+  barBg.cornerRadius = 4;
+  
+  const barFill = barBg.addStack();
+  barFill.size = new Size(parseFloat(tier.pct) * 1.2, 8);
+  barFill.backgroundColor = tier.tier === '第一档' ? new Color('#22C55E') 
+    : tier.tier === '第二档' ? new Color('#F59E0B') 
+    : new Color('#EF4444');
+  barFill.cornerRadius = 4;
+  
+  return w;
+}
+
+// ============ 绘制柱状图 ============
+function drawBarChart(data, family) {
+  const width = family === 'accessoryRectangular' ? 52 : 180;
+  const height = family === 'accessoryRectangular' ? 28 : 60;
+  
+  const ctx = new DrawContext();
+  ctx.size = new Size(width, height);
+  ctx.opaque = false;
+  
+  const max = Math.max(...data, 1);
+  const count = data.length;
+  const barGap = family === 'accessoryRectangular' ? 1 : 3;
+  const barWidth = (width - barGap * (count - 1)) / count;
+  
+  // 渐变色柱
+  const colors = [
+    new Color('#3B82F6'), // 蓝
+    new Color('#10B981'), // 绿
+    new Color('#F59E0B'), // 黄
+    new Color('#EF4444'), // 红
+    new Color('#8B5CF6'), // 紫
+    new Color('#EC4899'), // 粉
+  ];
+  
+  data.forEach((v, i) => {
+    const barH = Math.max(2, (v / max) * (height - 2));
+    const x = i * (barWidth + barGap);
+    const y = height - barH;
+    const c = colors[i % colors.length];
+    
+    ctx.setFillColor(c);
+    ctx.fillRect(new Rect(x, y, barWidth, barH));
+  });
+  
+  return ctx.getImage();
+}
+
+// ============ 主入口 ============
+try {
+  const widget = await render();
+  if (config.runsInWidget) {
+    Script.setWidget(widget);
+  } else {
+    // App 内预览
+    widget.presentMedium();
+  }
+} catch (e) {
+  console.log('渲染失败:', e);
+  const w = new ListWidget();
+  w.addText('❌ 渲染失败: ' + e.message).font = Font.regularSystemFont(13);
+  if (config.runsInWidget) Script.setWidget(w);
+  else w.presentMedium();
+}
+Script.complete();
+",
   "share_sheet_inputs": []
 }
