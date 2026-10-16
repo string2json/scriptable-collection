@@ -34,6 +34,15 @@ Loon 代理客户端的 `.plugin` 插件文件。
 - **脚本路径**:`rewrite/10010/index.js`(本仓库维护)
 - **上游**:https://github.com/dompling/Script/tree/master/10010
 
+### SouthernPower_95598.plugin
+
+**南网在线 95598 Token 自动获取** —— 打开南网在线 App 时自动捕获 `x-auth-token`。
+
+- **触发规则**:匹配 `95598.csg.cn`,从 request header 读取 token
+- **MitM**:需要,plugin 已自动配置 hostname
+- **脚本路径**:`rewrite/95598/get_95598_token.js`(本仓库维护)
+- **上游**:https://github.com/95du/scripts/blob/master/rewrite/get_95598_token.js
+
 ### 12123_token.plugin + 12123.js
 
 12123 App 相关的 Token 获取/解析脚本。
@@ -43,7 +52,8 @@ Loon 代理客户端的 `.plugin` 插件文件。
 Surge / Loon / QX 三端通用的 rewrite JS 脚本。
 
 - `xt.js` —— 炫图自动注册核心脚本(Env 框架封装)
-- `10010/index.js` —— 中国联通 Cookie 自动获取(dompling API 框架封装)
+- `10010/index.js` —— 中国联通 Cookie 自动获取(dompling API 框架)
+- `95598/get_95598_token.js` —— 南网在线 Token 获取(chavy Env 框架)
 
 ## script/
 
