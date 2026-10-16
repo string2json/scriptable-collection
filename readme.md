@@ -18,6 +18,15 @@ Loon 代理客户端的 `.plugin` 插件文件。
 
 原理:小程序调用 `universalAdQuery` 获取广告 JSON,我们直接返回空对象,小程序拿不到广告数据就不会加载图片。
 
+### CalculatorHDPro_Unlock.plugin
+
+**计算器 HD 解锁会员** —— 破解 `www.40sishi.com` App 的 Pro 版会员状态。
+
+- **触发规则**:拦截 `/user/profile` 响应,伪造 `vipState`
+- **MitM**:需要,plugin 已自动配置 hostname
+- **脚本路径**:`rewrite/CalculatorHDPro/index.js`(本仓库维护)
+- **上游**:https://github.com/yqc007/QuantumultX/blob/master/CalculatorHDProCrack.js
+
 ### XuanTu_AI_Unlock.plugin
 
 **炫图 AI 画图解锁会员** —— 自动注册临时账号、解锁 AI 功能、去水印。
@@ -71,6 +80,7 @@ Surge / Loon / QX 三端通用的 rewrite JS 脚本。
 | `10010/index.js` | 中国联通 Cookie 获取 | dompling API |
 | `95598/get_95598_token.js` | 南网在线 Token 获取 | chavy Env |
 | `12123/getBody_12123.js` | 交管12123 Token 获取(支付宝小程序) | chavy Env |
+| `CalculatorHDPro/index.js` | 计算器 HD 解锁会员(伪造 vipState) | 原生 |
 
 ## script/
 

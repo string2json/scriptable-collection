@@ -1,0 +1,29 @@
+#!name=计算器HD解锁会员
+#!desc=破解计算器HD Pro版会员状态
+#!author=Hausd0rff (维护: string2json)
+#!loon_version=3.5.1(983)
+#!date=2026-10-16
+#!tag=计算器HD,40sishi,会员
+
+############################################################
+# 使用方式:
+#   1. 安装并信任 Loon MitM 根证书
+#   2. 开启 MitM(plugin 自动配置 hostname)
+#   3. 打开计算器 HD App → 进入个人中心
+#   4. 会员状态自动变为永久 VIP
+#
+# 原理:
+#   App 请求 /user/profile 获取会员状态,脚本拦截响应,
+#   把 vipState.state 改为 1,forever 改为 true,
+#   expireTime 设为极远未来(32495476149000 毫秒 ≈ 2970 年)
+#
+# 脚本来源:
+#   https://github.com/yqc007/QuantumultX/blob/master/CalculatorHDProCrack.js
+#   已同步到本仓库 rewrite/CalculatorHDPro/index.js 便于维护
+############################################################
+
+[Script]
+http-response ^https?:\/\/www\.40sishi\.com\/(list|currency|calculator)\/user\/profile script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/CalculatorHDPro/index.js, requires-body=true, tag=计算器HD解锁
+
+[Mitm]
+hostname = www.40sishi.com
