@@ -1,6 +1,7 @@
 #!name=南网在线95598_Token获取
 #!desc=打开南网在线App或微信小程序自动捕获x-auth-token
 #!author=95du (维护: string2json)
+#!icon=https://raw.githubusercontent.com/string2json/scriptable-collection/main/img/95598.png
 #!loon_version=3.5.1(983)
 #!date=2026-10-16
 #!tag=95598,南网在线,电网,token

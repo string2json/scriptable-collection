@@ -103,6 +103,19 @@ https://raw.githubusercontent.com/string2json/scriptable-collection/main/loon/We
 https://raw.githubusercontent.com/string2json/scriptable-collection/main/loon/<文件名>.plugin
 ```
 
+## img/
+
+Loon plugin 图标资源目录。所有 plugin 的 `#!icon=` 都指向本目录下的文件,避免上游删库导致图标丢失。
+
+| 文件 | 对应 plugin |
+|---|---|
+| `mascc.png` | WeChatMiniPrograms_AdBlock |
+| `calculatorhd.png` | CalculatorHDPro_Unlock |
+| `xuantu.png` | XuanTu_AI_Unlock |
+| `unicom.png` | ChinaUnicom_Cookie |
+| `95598.png` | SouthernPower_95598 |
+| `12123.png` | 12123_token |
+
 ## json/
 
 通用 JSON 配置片段。
@@ -111,6 +124,7 @@ https://raw.githubusercontent.com/string2json/scriptable-collection/main/loon/<�
 
 | 日期 | 变更 |
 |---|---|
+| 2026-10-16 | 全部 plugin 新增 `#!icon=`,建立 `img/` 目录统一维护图标,避免上游删库导致图标丢失 |
 | 2026-10-16 | 12123 plugin 修复:script-path 从已删除的 `getToken_12123.js` 改为 `getBody_12123.js`;MitM 从 `sni-hosts` 改为 `hostname`;保存最新 rewrite 脚本 |
 | 2026-10-16 | 全部 plugin 从 `[Rewrite] script-request-header`(Surge 语法)迁移为 `[Script] http-request`(Loon 正确语法) |
 | 2026-10-16 | 95598 plugin 补充 `weixin.csg.cn` 域名(微信小程序实际使用) |

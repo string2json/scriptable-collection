@@ -1,6 +1,7 @@
 #!name=马上充小程序去广告
 #!desc=针对佛山商捷"马上充"充电小程序的广告拦截
 #!author=LocalDev
+#!icon=https://raw.githubusercontent.com/string2json/scriptable-collection/main/img/mascc.png
 #!loon_version=3.5.1(983)
 #!date=2026-10-14
 #!tag=去广告,马上充,商捷,充电

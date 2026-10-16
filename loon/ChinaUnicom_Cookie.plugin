@@ -1,6 +1,7 @@
 #!name=中国联通Cookie获取
 #!desc=打开联通App首页流量查询自动捕获Cookie
 #!author=dompling (维护: string2json)
+#!icon=https://raw.githubusercontent.com/string2json/scriptable-collection/main/img/unicom.png
 #!loon_version=3.5.1(983)
 #!date=2026-10-16
 #!tag=联通,10010,cookie
