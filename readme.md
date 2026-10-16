@@ -46,9 +46,20 @@ Loon 代理客户端的 `.plugin` 插件文件。
 - **脚本路径**:`rewrite/95598/get_95598_token.js`(本仓库维护)
 - **上游**:https://github.com/95du/scripts/blob/master/rewrite/get_95598_token.js
 
-### 12123_token.plugin + 12123.js
+### 12123_token.plugin
 
-12123 App 相关的 Token 获取/解析脚本。
+**交管12123 Token 自动获取** —— 打开支付宝交管12123小程序自动捕获 `verifyToken` / `sign`。
+
+- **触发规则**:匹配 `miniappcsfw.122.gov.cn:8443/openapi/invokeApi/business/biz`
+- **脚本逻辑**:从 `request.body` 提取 sign,找到 `biz.user.msg.subscribe` API 时保存
+- **MitM**:需要,plugin 已自动配置 hostname
+- **脚本路径**:`rewrite/12123/getBody_12123.js`(本仓库维护)
+- **上游**:https://github.com/95du/scripts/blob/master/rewrite/getBody_12123.js
+- **组件**:搭配 `script/交管12123.scriptable`(Scriptable 小组件使用)
+
+### 12123.js
+
+旧版脚本(从 Env 框架看是早期版本),已废弃,使用 `rewrite/12123/getBody_12123.js`。
 
 ## rewrite/
 
@@ -59,12 +70,14 @@ Surge / Loon / QX 三端通用的 rewrite JS 脚本。
 | `xt.js` | 炫图自动注册核心 | chavy Env |
 | `10010/index.js` | 中国联通 Cookie 获取 | dompling API |
 | `95598/get_95598_token.js` | 南网在线 Token 获取 | chavy Env |
+| `12123/getBody_12123.js` | 交管12123 Token 获取(支付宝小程序) | chavy Env |
 
 ## script/
 
 Scriptable(iOS)小组件脚本。
 
 - `TodayOilPrice.scriptable` —— 今日油价小组件(继承 DmYY 框架,支持小/中/大尺寸)
+- `交管12123.scriptable` —— 交管12123 查违章/查分/看驾照,需配合 `12123_token.plugin` 先获取 verifyToken
 
 ## 使用
 
@@ -88,6 +101,7 @@ https://raw.githubusercontent.com/string2json/scriptable-collection/main/loon/<�
 
 | 日期 | 变更 |
 |---|---|
+| 2026-10-16 | 12123 plugin 修复:script-path 从已删除的 `getToken_12123.js` 改为 `getBody_12123.js`;MitM 从 `sni-hosts` 改为 `hostname`;保存最新 rewrite 脚本 |
 | 2026-10-16 | 全部 plugin 从 `[Rewrite] script-request-header`(Surge 语法)迁移为 `[Script] http-request`(Loon 正确语法) |
 | 2026-10-16 | 95598 plugin 补充 `weixin.csg.cn` 域名(微信小程序实际使用) |
 | 2026-10-16 | 新增炫图、联通、95598 三个 plugin |

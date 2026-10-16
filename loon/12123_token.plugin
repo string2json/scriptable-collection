@@ -1,11 +1,35 @@
-#!name=12123获取Token
-#!desc=劫持交管12123小程序接口获取Token
-#!author=Convert
-#!tag=12123,Token
-#!version=1.0
+#!name=交管12123获取Token
+#!desc=支付宝小程序劫持接口获取verifyToken/sign
+#!author=95du茅台 (维护: string2json)
+#!loon_version=3.5.1(983)
+#!date=2026-10-16
+#!tag=12123,Token,支付宝
+
+############################################################
+# 使用方式:
+#   1. 安装并信任 Loon MitM 根证书
+#   2. 开启 MitM(plugin 自动配置 hostname)
+#   3. 打开支付宝 App → 搜索"交管12123"小程序 → 登录
+#   4. 进入首页 / 车辆信息页面(触发 biz.user.msg.subscribe 接口)
+#   5. Loon 通知栏出现 "交管12123 / 验证令牌/签名获取成功 ✅" 即成功
+#
+# 脚本存储位置:
+#   verifyToken/sign:  Loon 持久化 key = "body_12123"(JSON)
+#   电子驾驶证 Cookie: Loon 持久化 key = "ele_cookie_12123"
+#
+# 脚本来源:
+#   https://github.com/95du/scripts/blob/master/rewrite/getBody_12123.js
+#   已同步到本仓库 rewrite/12123/getBody_12123.js 便于维护
+#
+# 2026-10-16 修复:
+#   1. script-path 从已删除的 getToken_12123.js → getBody_12123.js
+#   2. script-path 改指向本仓库 raw URL
+#   3. MitM 从 sni-hosts 改为 hostname(Loon 正确语法)
+#   4. requires-body=true 才能读取 request.body 里的 sign
+############################################################
 
 [Script]
-http-request ^https:\/\/miniappcsfw\.122\.gov\.cn:8443\/openapi\/invokeApi\/business\/biz script-path=https://raw.githubusercontent.com/95du/scripts/master/rewrite/getToken_12123.js, requires-body=true, tag=12123Token
+http-request ^https:\/\/miniappcsfw\.122\.gov\.cn:8443\/openapi\/invokeApi\/business\/biz script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/12123/getBody_12123.js, requires-body=true, tag=12123Token
 
-[MITM]
-sni-hosts = miniappcsfw.122.gov.cn
+[Mitm]
+hostname = miniappcsfw.122.gov.cn
