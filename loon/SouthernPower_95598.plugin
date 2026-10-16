@@ -1,5 +1,5 @@
 #!name=南网在线95598_Token获取
-#!desc=打开南网在线App自动捕获x-auth-token
+#!desc=打开南网在线App或微信小程序自动捕获x-auth-token
 #!author=95du (维护: string2json)
 #!loon_version=3.5.1(983)
 #!date=2026-10-16
@@ -9,11 +9,13 @@
 # 使用方式:
 #   1. 安装并信任 Loon MitM 根证书
 #   2. 开启 MitM(plugin 自动配置 hostname)
-#   3. 打开南网在线 App → 登录 → 进入首页(触发 queryBindEleUsers 接口)
+#   3. 打开南网在线 App 或 微信小程序 → 登录 → 进入首页
 #   4. Loon 通知栏出现 "南网在线 / 95598_Token 获取成功" 即成功
 #
 # 触发原理:
-#   匹配 https://95598.csg.cn 请求,从 request header 中读取 x-auth-token
+#   匹配 queryBindEleUsers 请求,从 request header 中读取 x-auth-token
+#   微信小程序走 weixin.csg.cn,App 走 95598.csg.cn
+#   URL 里有双斜杠 //,正则已兼容
 #
 # Token 存储位置:
 #   Loon 持久化存储 key = "token_95598"
@@ -21,10 +23,15 @@
 # 脚本来源:
 #   https://github.com/95du/scripts/blob/master/rewrite/get_95598_token.js
 #   已同步到本仓库 rewrite/95598/get_95598_token.js 便于维护
+#
+# 2026-10-16 修复:
+#   原规则只匹配 95598.csg.cn,漏了微信小程序实际使用的 weixin.csg.cn
+#   导致小程序请求没被 MitM 捕获,脚本从未触发
 ############################################################
 
 [Rewrite]
-^https:\/\/95598\.csg\.cn url script-request-header https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/95598/get_95598_token.js
+# 南网在线 App + 微信小程序,两个域名都要匹配
+^https:\/\/(95598|weixin)\.csg\.cn url script-request-header https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/95598/get_95598_token.js
 
 [Mitm]
-hostname = 95598.csg.cn
+hostname = 95598.csg.cn, weixin.csg.cn
