@@ -30,13 +30,13 @@
 
 [Script]
 # 触发自动注册拿 token(每次进"我的作品"都执行)
-http-request ^https:\/\/xuantu\.pro\/creation\/myworks script-path=https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt.js, tag=炫图触发
+http-request ^https:\/\/xuantu\.pro\/creation\/myworks script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/ios151/xt.js, tag=炫图触发
 
 # 注入 token 解锁会员功能
-http-request ^https:\/\/xuantu\.pro\/(creation\/(generate\/(v2|v3)|memberships|getProgress|imageintent)|file\/aliyun\/sts|community\/comment\/pub)\/? script-path=https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt2.js, tag=炫图注入
+http-request ^https:\/\/xuantu\.pro\/(creation\/(generate\/(v2|v3)|memberships|getProgress|imageintent)|file\/aliyun\/sts|community\/comment\/pub)\/? script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/ios151/xt2.js, tag=炫图注入
 
 # 伪造已登录状态(个人中心显示会员)
-http-response ^https:\/\/xuantu\.pro\/user\/getUserInfo script-path=https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt3.js, tag=炫图伪造
+http-response ^https:\/\/xuantu\.pro\/user\/getUserInfo script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/ios151/xt3.js, tag=炫图伪造
 
 [Rewrite]
 # 无水印:去掉 ReplaceBackgroundWithPrompt 路径里的尺寸参数
