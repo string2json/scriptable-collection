@@ -8,6 +8,15 @@ Loon 代理客户端的 `.plugin` 插件文件。
 
 所有 plugin 均使用 Loon 正确语法:`[Script] http-request / http-response` + `[Rewrite]` + `[Mitm]`,非 Surge 的 `script-request-header` 旧语法。
 
+### CamScanner_Unlock.plugin
+
+**扫描全能王解锁 VIP** —— 伪造 `psnl_vip_property.expiry` 过期时间。
+
+- **触发规则**:拦截 `intsig.net` 下的会员查询接口响应
+- **MitM**:需要,plugin 已自动配置 hostname(`ap*.intsig.net`)
+- **脚本路径**:`rewrite/camscanner/CamScanner.js`(本仓库维护)
+- **上游**:https://github.com/NobyDa/Script/blob/master/Surge/JS/CamScanner.js
+
 ### TangXin_Vlog.plugin
 
 **糖心 Vlog 解锁点播去广告** —— 采用请求转发架构。
