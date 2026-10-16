@@ -1,8 +1,8 @@
 #!name=炫图AI画图解锁会员
 #!desc=自动注册+解锁AI功能+无水印
-#!author=ios151
+#!author=ios151 (维护: string2json)
 #!loon_version=3.5.1(983)
-#!date=2025-09-30
+#!date=2026-10-16
 #!tag=炫图,xuantu,AI,画图
 
 ############################################################
@@ -21,20 +21,25 @@
 #   2. 开启 MitM(plugin 会自动配置 hostname)
 #   3. 打开炫图 App → 微信登录 → 进入个人页面
 #   4. Loon 日志出现 "✅ 登录成功" 即成功
+#
+# 2026-10-16 修复:
+#   [Rewrite] + script-request-header 是 Surge 旧语法,
+#   Loon plugin 要用 [Script] + http-request / http-response
 ############################################################
 
-[Rewrite]
+[Script]
 # 触发自动注册拿 token(每次进"我的作品"都执行)
-^https:\/\/xuantu\.pro\/creation\/myworks url script-request-header https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt.js
+http-request ^https:\/\/xuantu\.pro\/creation\/myworks script-path=https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt.js, tag=炫图触发
 
 # 注入 token 解锁会员功能
-^https:\/\/xuantu\.pro\/(creation\/(generate\/(v2|v3)|memberships|getProgress|imageintent)|file\/aliyun\/sts|community\/comment\/pub)\/? url script-request-header https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt2.js
+http-request ^https:\/\/xuantu\.pro\/(creation\/(generate\/(v2|v3)|memberships|getProgress|imageintent)|file\/aliyun\/sts|community\/comment\/pub)\/? script-path=https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt2.js, tag=炫图注入
 
 # 伪造已登录状态(个人中心显示会员)
-^https:\/\/xuantu\.pro\/user\/getUserInfo url script-response-body https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt3.js
+http-response ^https:\/\/xuantu\.pro\/user\/getUserInfo script-path=https://raw.githubusercontent.com/ios151/Rewrite/refs/heads/main/xt3.js, tag=炫图伪造
 
+[Rewrite]
 # 无水印:去掉 ReplaceBackgroundWithPrompt 路径里的尺寸参数
-^http://statica\.xuantu\.pro/x/prod/ReplaceBackgroundWithPrompt/(\d+-\d+)\.jpg\?.* url 302 http://statica.xuantu.pro/x/prod/ReplaceBackgroundWithPrompt/$1.jpg
+^http:\/\/statica\.xuantu\.pro\/x\/prod\/ReplaceBackgroundWithPrompt\/(\d+-\d+)\.jpg\?.* url 302 http:\/\/statica\.xuantu\.pro\/x\/prod\/ReplaceBackgroundWithPrompt\/$1.jpg
 
 [Mitm]
 hostname = xuantu.pro, statica.xuantu.pro

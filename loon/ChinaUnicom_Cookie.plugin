@@ -18,10 +18,13 @@
 # 脚本来源:
 #   https://github.com/dompling/Script/blob/master/10010/index.js
 #   已同步到本仓库 rewrite/10010/index.js 便于维护
+#
+# 2026-10-16 修复:
+#   [Rewrite] + script-request-header 是 Surge 旧语法,Loon plugin 要用 [Script] + http-request
 ############################################################
 
-[Rewrite]
-^https?:\/\/m(?:xx)?\.client\.10010\.com\/(?:.*\/)?smartwisdomCommon(?:New)?(?:\?.*)?$ url script-request-header https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/10010/index.js
+[Script]
+http-request ^https?:\/\/m(?:xx)?\.client\.10010\.com\/(?:.*\/)?smartwisdomCommon(?:New)?(?:\?.*)?$ script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/10010/index.js, tag=联通headers
 
 [Mitm]
 hostname = m.client.10010.com, mxx.client.10010.com

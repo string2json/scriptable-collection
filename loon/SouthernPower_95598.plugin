@@ -15,7 +15,6 @@
 # 触发原理:
 #   匹配 queryBindEleUsers 请求,从 request header 中读取 x-auth-token
 #   微信小程序走 weixin.csg.cn,App 走 95598.csg.cn
-#   URL 里有双斜杠 //,正则已兼容
 #
 # Token 存储位置:
 #   Loon 持久化存储 key = "token_95598"
@@ -25,13 +24,13 @@
 #   已同步到本仓库 rewrite/95598/get_95598_token.js 便于维护
 #
 # 2026-10-16 修复:
-#   原规则只匹配 95598.csg.cn,漏了微信小程序实际使用的 weixin.csg.cn
-#   导致小程序请求没被 MitM 捕获,脚本从未触发
+#   1. 漏匹配 weixin.csg.cn (微信小程序实际域名)
+#   2. [Rewrite] + script-request-header 是 Surge 旧语法,
+#      Loon plugin 要用 [Script] + http-request
 ############################################################
 
-[Rewrite]
-# 南网在线 App + 微信小程序,两个域名都要匹配
-^https:\/\/(95598|weixin)\.csg\.cn url script-request-header https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/95598/get_95598_token.js
+[Script]
+http-request ^https:\/\/(95598|weixin)\.csg\.cn script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/95598/get_95598_token.js, tag=95598Token
 
 [Mitm]
 hostname = 95598.csg.cn, weixin.csg.cn
