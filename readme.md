@@ -25,7 +25,7 @@
 | [NobyDa](https://github.com/NobyDa/Script) | Script | 扫描全能王 CamScanner |
 | [yqc007](https://github.com/yqc007/QuantumultX) | QuantumultX | 计算器 HD |
 | [Hausd0rff](https://github.com/yqc007/QuantumultX) | — | 计算器 HD 破解脚本原作者 |
-| [txscript](https://txscript.pages.dev) | — | 糖心 Vlog 破解(请求转发架构) |
+| [txscript](https://txscript.pages.dev) | — |  (请求转发架构) |
 | [chavy](https://github.com/chavyleung) | Env 框架 | 多个脚本依赖的通用 Env 运行框架 |
 
 > 以上名单如有遗漏,请联系我补充或更正。
@@ -134,7 +134,7 @@ Surge / Loon / QX 三端通用的 rewrite JS 脚本。
 | `95598/get_95598_token.js` | 南网在线 Token 获取 | chavy Env |
 | `12123/getBody_12123.js` | 交管12123 Token 获取(支付宝小程序) | chavy Env |
 | `CalculatorHDPro/index.js` | 计算器 HD 解锁会员(伪造 vipState) | 原生 |
-| `tx/loon.js` | 糖心 Vlog 请求转发脚本 | 原生 |
+| `tx/loon.js` | 请求转发脚本 | 原生 |
 
 ## script/
 
@@ -179,7 +179,7 @@ Loon plugin 图标资源目录。所有 plugin 的 `#!icon=` 都指向本目录�
 
 | 日期 | 变更 |
 |---|---|
-| 2026-10-16 | 新增糖心 Vlog plugin(`TangXin_Vlog.plugin`),采用请求转发架构,plugin+loon.js+icon 全量迁移到本仓库 |
+| 2026-10-16 |  Vlog plugin(`tx_Vlog.plugin`),采用请求转发架构,plugin+loon.js+icon 全量迁移到本仓库 |
 | 2026-10-16 | 替换 5 个图标为真实来源:3 个来自 95du/scripts,2 个来自 icons8 |
 | 2026-10-16 | 全部 plugin 新增 `#!icon=`,建立 `img/` 目录统一维护图标,避免上游删库导致图标丢失 |
 | 2026-10-16 | 12123 plugin 修复:script-path 从已删除的 `getToken_12123.js` 改为 `getBody_12123.js`;MitM 从 `sni-hosts` 改为 `hostname`;保存最新 rewrite 脚本 |
