@@ -2,6 +2,36 @@
 
 个人收集的 Loon 代理插件、rewrite JS 脚本、Scriptable 小组件等。
 
+---
+
+## ⚠️ 免责声明
+
+本仓库中所有脚本、插件、配置文件均来自互联网公开渠道的收集、整理与归档。
+
+- 所有脚本的著作权归其原作者所有,本仓库仅作本地化维护,以便在原作者删库、修改或仓库不可访问时仍可正常使用
+- 本仓库内容**仅供本人个人学习与研究使用**,**严禁用于任何商业用途**
+- 任何基于本仓库脚本产生的行为及其后果,由使用者自行承担,本仓库维护者不承担任何连带责任
+- 如果您是某脚本的原作者,不希望其出现在本仓库中,请联系我删除
+
+## 🙏 鸣谢
+
+本仓库中的脚本均来自各位开发者的开源分享,在此一并感谢:
+
+| 作者 | 仓库/作品 | 本仓库中使用的脚本 |
+|---|---|---|
+| [ios151](https://github.com/ios151/Rewrite) | Rewrite(300+ 脚本) | 炫图 xt/xt2/xt3、粤语翻译 yyfysq、扫描全能王 CamScanner 等 |
+| [95du 茅台](https://github.com/95du/scripts) | scripts | 联通 10010 Cookie、95598 Token、交管 12123、油价小组件、图标 |
+| [dompling](https://github.com/dompling/Script) | Script | 联通 Cookie |
+| [NobyDa](https://github.com/NobyDa/Script) | Script | 扫描全能王 CamScanner |
+| [yqc007](https://github.com/yqc007/QuantumultX) | QuantumultX | 计算器 HD |
+| [Hausd0rff](https://github.com/yqc007/QuantumultX) | — | 计算器 HD 破解脚本原作者 |
+| [txscript](https://txscript.pages.dev) | — | 糖心 Vlog 破解(请求转发架构) |
+| [chavy](https://github.com/chavyleung) | Env 框架 | 多个脚本依赖的通用 Env 运行框架 |
+
+> 以上名单如有遗漏,请联系我补充或更正。
+
+---
+
 ## loon/
 
 Loon 代理客户端的 `.plugin` 插件文件。
@@ -53,7 +83,7 @@ Loon 代理客户端的 `.plugin` 插件文件。
 - **核心脚本**:xt.js(自动注册拿 token) + xt2.js(注入 header) + xt3.js(伪造 userInfo)
 - **运行机制**:每次 App 访问 `/creation/myworks` 时自动触发
 - **MitM**:需要,plugin 已自动配置 hostname
-- **脚本来源**:github.com/ios151/Rewrite(远程 raw,不在本仓库)
+- **脚本路径**:`rewrite/ios151/xt.js` + `xt2.js` + `xt3.js`(本仓库维护,来自 ios151/Rewrite)
 
 ### ChinaUnicom_Cookie.plugin
 
@@ -95,11 +125,16 @@ Surge / Loon / QX 三端通用的 rewrite JS 脚本。
 
 | 脚本 | 用途 | 框架 |
 |---|---|---|
-| `xt.js` | 炫图自动注册核心 | chavy Env |
+| `ios151/xt.js` | 炫图自动注册拿 token | chavy Env |
+| `ios151/xt2.js` | 炫图 token 注入请求头 | chavy Env |
+| `ios151/xt3.js` | 炫图伪造 userInfo 响应 | 原生 |
+| `ios151/yyfysq.js` | 粤语翻译神器解锁会员 | 原生 |
+| `camscanner/CamScanner.js` | 扫描全能王解锁 VIP | 原生 |
 | `10010/index.js` | 中国联通 Cookie 获取 | dompling API |
 | `95598/get_95598_token.js` | 南网在线 Token 获取 | chavy Env |
 | `12123/getBody_12123.js` | 交管12123 Token 获取(支付宝小程序) | chavy Env |
 | `CalculatorHDPro/index.js` | 计算器 HD 解锁会员(伪造 vipState) | 原生 |
+| `tx/loon.js` | 糖心 Vlog 请求转发脚本 | 原生 |
 
 ## script/
 
