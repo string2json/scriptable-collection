@@ -107,14 +107,14 @@ https://raw.githubusercontent.com/string2json/scriptable-collection/main/loon/<�
 
 Loon plugin 图标资源目录。所有 plugin 的 `#!icon=` 都指向本目录下的文件,避免上游删库导致图标丢失。
 
-| 文件 | 对应 plugin |
-|---|---|
-| `mascc.png` | WeChatMiniPrograms_AdBlock |
-| `calculatorhd.png` | CalculatorHDPro_Unlock |
-| `xuantu.png` | XuanTu_AI_Unlock |
-| `unicom.png` | ChinaUnicom_Cookie |
-| `95598.png` | SouthernPower_95598 |
-| `12123.png` | 12123_token |
+| 文件 | 对应 plugin | 来源 |
+|---|---|---|
+| `mascc.png` | WeChatMiniPrograms_AdBlock | [icons8 lightning-bolt](https://img.icons8.com/color/256/lightning-bolt.png) |
+| `calculatorhd.png` | CalculatorHDPro_Unlock | [icons8 calculator](https://img.icons8.com/color/256/calculator.png) |
+| `xuantu.png` | XuanTu_AI_Unlock | AI 生成 |
+| `unicom.png` | ChinaUnicom_Cookie | [95du/scripts img/icon/china_unicom.png](https://github.com/95du/scripts/blob/master/img/icon/china_unicom.png) |
+| `95598.png` | SouthernPower_95598 | [95du/scripts img/icon/electric.png](https://github.com/95du/scripts/blob/master/img/icon/electric.png) |
+| `12123.png` | 12123_token | [95du/scripts img/icon/12123.png](https://github.com/95du/scripts/blob/master/img/icon/12123.png) |
 
 ## json/
 
