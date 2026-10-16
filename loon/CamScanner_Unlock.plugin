@@ -1,0 +1,32 @@
+#!name=扫描全能王解锁VIP
+#!desc=CamScanner 解锁高级特权(vip member)
+#!author=NobyDa (维护: string2json)
+#!icon=https://raw.githubusercontent.com/string2json/scriptable-collection/main/img/camscanner.png
+#!date=2026-10-16
+#!tag=扫描全能王,CamScanner,VIP
+
+############################################################
+# 使用方式:
+#   1. 安装并信任 Loon MitM 根证书
+#   2. 开启 MitM(plugin 自动配置 hostname)
+#   3. 打开扫描全能王 App → 登录 → 进入个人中心
+#   4. VIP 状态自动解锁
+#
+# 原理:
+#   App 请求 /purchase/cs/query_property 查询会员属性,
+#   脚本拦截响应,把 psnl_vip_property.expiry 改成 2013017600
+#   (Unix 秒 ≈ 2033-10-14)
+#
+# 脚本来源:
+#   https://github.com/NobyDa/Script/blob/master/Surge/JS/CamScanner.js
+#   已同步到本仓库 rewrite/camscanner/CamScanner.js 便于维护
+#
+# 2026-10-16 维护:
+#   从 Surge 语法适配为 Loon plugin,所有资源迁移本仓库
+############################################################
+
+[Script]
+http-response ^https:\/\/(api|api-cs)\.intsig\.net\/purchase\/cs\/query_property\? script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/camscanner/CamScanner.js, requires-body=true, tag=CamScanner解锁
+
+[Mitm]
+hostname = ap*.intsig.net
