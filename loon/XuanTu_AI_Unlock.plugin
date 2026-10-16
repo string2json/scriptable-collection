@@ -37,7 +37,8 @@ http-request ^https:\/\/api\.xuantu\.pro\/creation\/myworks script-path=https://
 http-request ^https:\/\/api\.xuantu\.pro\/(creation\/(generate\/(v2|v3)|memberships|getProgress|imageintent)|file\/aliyun\/sts|community\/comment\/pub|vip\/) script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/ios151/xt2.js, tag=炫图注入
 
 # 伪造已登录状态(个人中心显示会员)
-http-response ^https:\/\/api\.xuantu\.pro\/user\/getUserInfo script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/ios151/xt3.js, tag=炫图伪造
+# 必须 requires-body=true,否则 $response.body 是 undefined(Loon 官方文档要求)
+http-response ^https:\/\/api\.xuantu\.pro\/user\/getUserInfo script-path=https://raw.githubusercontent.com/string2json/scriptable-collection/main/rewrite/ios151/xt3.js, requires-body=true, tag=炫图伪造
 
 [Rewrite]
 # 无水印:去掉 ReplaceBackgroundWithPrompt 路径里的尺寸参数
