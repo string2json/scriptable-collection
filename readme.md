@@ -1,10 +1,12 @@
 # scriptable-collection
 
-个人收集的 Loon 插件、JSON 配置等。
+个人收集的 Loon 代理插件、rewrite JS 脚本、Scriptable 小组件等。
 
 ## loon/
 
 Loon 代理客户端的 `.plugin` 插件文件。
+
+所有 plugin 均使用 Loon 正确语法:`[Script] http-request / http-response` + `[Rewrite]` + `[Mitm]`,非 Surge 的 `script-request-header` 旧语法。
 
 ### WeChatMiniPrograms_AdBlock.plugin
 
@@ -23,7 +25,7 @@ Loon 代理客户端的 `.plugin` 插件文件。
 - **核心脚本**:xt.js(自动注册拿 token) + xt2.js(注入 header) + xt3.js(伪造 userInfo)
 - **运行机制**:每次 App 访问 `/creation/myworks` 时自动触发
 - **MitM**:需要,plugin 已自动配置 hostname
-- **脚本来源**:github.com/ios151/Rewrite
+- **脚本来源**:github.com/ios151/Rewrite(远程 raw,不在本仓库)
 
 ### ChinaUnicom_Cookie.plugin
 
@@ -36,9 +38,10 @@ Loon 代理客户端的 `.plugin` 插件文件。
 
 ### SouthernPower_95598.plugin
 
-**南网在线 95598 Token 自动获取** —— 打开南网在线 App 时自动捕获 `x-auth-token`。
+**南网在线 95598 Token 自动获取** —— 支持 App 和微信小程序双端。
 
-- **触发规则**:匹配 `95598.csg.cn`,从 request header 读取 token
+- **触发规则**:匹配 `queryBindEleUsers` 请求,从 request header 读取 `x-auth-token`
+- **双端域名**:`95598.csg.cn`(App) + `weixin.csg.cn`(微信小程序)
 - **MitM**:需要,plugin 已自动配置 hostname
 - **脚本路径**:`rewrite/95598/get_95598_token.js`(本仓库维护)
 - **上游**:https://github.com/95du/scripts/blob/master/rewrite/get_95598_token.js
@@ -51,9 +54,11 @@ Loon 代理客户端的 `.plugin` 插件文件。
 
 Surge / Loon / QX 三端通用的 rewrite JS 脚本。
 
-- `xt.js` —— 炫图自动注册核心脚本(Env 框架封装)
-- `10010/index.js` —— 中国联通 Cookie 自动获取(dompling API 框架)
-- `95598/get_95598_token.js` —— 南网在线 Token 获取(chavy Env 框架)
+| 脚本 | 用途 | 框架 |
+|---|---|---|
+| `xt.js` | 炫图自动注册核心 | chavy Env |
+| `10010/index.js` | 中国联通 Cookie 获取 | dompling API |
+| `95598/get_95598_token.js` | 南网在线 Token 获取 | chavy Env |
 
 ## script/
 
@@ -70,6 +75,20 @@ Loon 设置 → 插件 → 导入 `.plugin` 文件,或在主配置中订阅 raw 
 https://raw.githubusercontent.com/string2json/scriptable-collection/main/loon/WeChatMiniPrograms_AdBlock.plugin, enabled=true
 ```
 
+订阅地址统一格式:
+```
+https://raw.githubusercontent.com/string2json/scriptable-collection/main/loon/<文件名>.plugin
+```
+
 ## json/
 
 通用 JSON 配置片段。
+
+## 维护日志
+
+| 日期 | 变更 |
+|---|---|
+| 2026-10-16 | 全部 plugin 从 `[Rewrite] script-request-header`(Surge 语法)迁移为 `[Script] http-request`(Loon 正确语法) |
+| 2026-10-16 | 95598 plugin 补充 `weixin.csg.cn` 域名(微信小程序实际使用) |
+| 2026-10-16 | 新增炫图、联通、95598 三个 plugin |
+| 2026-10-14 | 马上充 plugin 从 `image.yidianlingyi.cn` 改为 `api.yidianlingyi.cn`(广告数据主 API) |
